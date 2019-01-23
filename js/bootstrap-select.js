@@ -236,6 +236,7 @@
         ],
         searchSuccess = false;
 
+    var reg = new RegExp(searchString);
     for (var i = 0; i < stringTypes.length; i++) {
       var stringType = stringTypes[i],
           string = li[stringType];
@@ -252,7 +253,7 @@
         string = string.toUpperCase();
 
         if (method === 'contains') {
-          searchSuccess = string.indexOf(searchString) >= 0;
+          searchSuccess = (string.match(reg) !== null);
         } else {
           searchSuccess = string.startsWith(searchString);
         }

@@ -1,7 +1,7 @@
 /*!
  * Bootstrap-select v1.13.5 (https://developer.snapappointments.com/bootstrap-select)
  *
- * Copyright 2012-2018 SnapAppointments, LLC
+ * Copyright 2012-2019 SnapAppointments, LLC
  * Licensed under MIT (https://github.com/snapappointments/bootstrap-select/blob/master/LICENSE)
  */
 
@@ -260,6 +260,7 @@
         ],
         searchSuccess = false;
 
+    var reg = new RegExp(searchString);
     for (var i = 0; i < stringTypes.length; i++) {
       var stringType = stringTypes[i],
           string = li[stringType];
@@ -276,7 +277,7 @@
         string = string.toUpperCase();
 
         if (method === 'contains') {
-          searchSuccess = string.indexOf(searchString) >= 0;
+          searchSuccess = (string.match(reg) !== null);
         } else {
           searchSuccess = string.startsWith(searchString);
         }
@@ -752,7 +753,7 @@
             });
 
           that.$button.on('blur' + EVENT_KEY, function () {
-            that.$element.focus().blur();
+            that.$element.trigger('focus').trigger('blur');
             that.$button.off('blur' + EVENT_KEY);
           });
         });
@@ -1029,7 +1030,7 @@
         that.prevActiveIndex = that.activeIndex;
 
         if (!that.options.liveSearch) {
-          that.$menuInner.focus();
+          that.$menuInner.trigger('focus');
         } else if (isSearching && init) {
           var index = 0,
               newActive;
@@ -1271,7 +1272,13 @@
 
         var parentData = $parent.data();
 
-        if ((thisData.hidden === true || this.hidden) || (that.options.hideDisabled && (isDisabled || isOptgroupDisabled))) {
+        if (
+          (
+            (thisData.hidden === true || this.hidden) ||
+            (isOptgroup && (parentData.hidden === true || parent.hidden))
+          ) ||
+          (that.options.hideDisabled && (isDisabled || isOptgroupDisabled))
+        ) {
           // set prevHiddenIndex - the index of the first hidden option in a group of hidden options
           // used to determine whether or not a divider should be placed after an optgroup if there are
           // hidden options between the optgroup and the first visible option
@@ -1313,6 +1320,8 @@
           }
 
           return;
+        } else {
+          $this.next().removeData('prevHiddenIndex');
         }
 
         if (isOptgroup && thisData.divider !== true) {
@@ -1333,6 +1342,8 @@
 
           prevHiddenIndex = thisData.prevHiddenIndex;
 
+          // Get the first visible option before the first hidden option in the group.
+          // Ensures a divider is shown if, for example, the first option in the optgroup is hidden.
           if (prevHiddenIndex !== undefined) {
             previousOption = $selectOptions[prevHiddenIndex].previousElementSibling;
           }
@@ -2107,7 +2118,7 @@
         }
       }
 
-      this.$button.click(function () {
+      this.$button.on('click', function () {
         return !that.isDisabled();
       });
     },
@@ -2161,9 +2172,9 @@
 
       function setFocus () {
         if (that.options.liveSearch) {
-          that.$searchbox.focus();
+          that.$searchbox.trigger('focus');
         } else {
-          that.$menuInner.focus();
+          that.$menuInner.trigger('focus');
         }
       }
 
@@ -2227,7 +2238,7 @@
             $option.prop('selected', !state);
 
             that.setSelected(clickedIndex, !state);
-            $this.blur();
+            $this.trigger('blur');
 
             if (maxOptions !== false || maxOptionsGrp !== false) {
               var maxReached = maxOptions < $options.filter(':selected').length,
@@ -2295,9 +2306,9 @@
           }
 
           if (!that.multiple || (that.multiple && that.options.maxOptions === 1)) {
-            that.$button.focus();
+            that.$button.trigger('focus');
           } else if (that.options.liveSearch) {
-            that.$searchbox.focus();
+            that.$searchbox.trigger('focus');
           }
 
           // Trigger select 'change'
@@ -2317,9 +2328,9 @@
           e.preventDefault();
           e.stopPropagation();
           if (that.options.liveSearch && !$(e.target).hasClass('close')) {
-            that.$searchbox.focus();
+            that.$searchbox.trigger('focus');
           } else {
-            that.$button.focus();
+            that.$button.trigger('focus');
           }
         }
       });
@@ -2328,14 +2339,14 @@
         e.preventDefault();
         e.stopPropagation();
         if (that.options.liveSearch) {
-          that.$searchbox.focus();
+          that.$searchbox.trigger('focus');
         } else {
-          that.$button.focus();
+          that.$button.trigger('focus');
         }
       });
 
       this.$menu.on('click', '.' + classNames.POPOVERHEADER + ' .close', function () {
-        that.$button.click();
+        that.$button.trigger('click');
       });
 
       this.$searchbox.on('click', function (e) {
@@ -2344,9 +2355,9 @@
 
       this.$menu.on('click', '.actions-btn', function (e) {
         if (that.options.liveSearch) {
-          that.$searchbox.focus();
+          that.$searchbox.trigger('focus');
         } else {
-          that.$button.focus();
+          that.$button.trigger('focus');
         }
 
         e.preventDefault();
@@ -2366,7 +2377,7 @@
           changedArguments = null;
         },
         'focus': function () {
-          if (!that.options.mobile) that.$button.focus();
+          if (!that.options.mobile) that.$button.trigger('focus');
         }
       });
     },
@@ -2566,7 +2577,7 @@
 
       if (e.which === keyCodes.ESCAPE && isActive) {
         e.preventDefault();
-        that.$button.trigger('click.bs.dropdown.data-api').focus();
+        that.$button.trigger('click.bs.dropdown.data-api').trigger('focus');
       }
 
       if (isArrowKey) { // if up or down
@@ -2644,9 +2655,9 @@
         if (updateScroll) that.$menuInner[0].scrollTop = offset;
 
         if (that.options.liveSearch) {
-          that.$searchbox.focus();
+          that.$searchbox.trigger('focus');
         } else {
-          $this.focus();
+          $this.trigger('focus');
         }
       } else if (
         (!$this.is('input') && !REGEXP_TAB_OR_ESCAPE.test(e.which)) ||
@@ -2717,11 +2728,11 @@
           if (liActive.firstChild) liActive.firstChild.classList.add('active');
           that.activeIndex = matches[matchIndex];
 
-          liActive.firstChild.focus();
+          liActive.firstChild.trigger('focus');
 
           if (updateScroll) that.$menuInner[0].scrollTop = offset;
 
-          $this.focus();
+          $this.trigger('focus');
         }
       }
 
@@ -2738,7 +2749,7 @@
 
         if (!that.options.liveSearch || e.which !== keyCodes.SPACE) {
           that.$menuInner.find('.active a').trigger('click', true); // retain active class
-          $this.focus();
+          $this.trigger('focus');
 
           if (!that.options.liveSearch) {
             // Prevent screen from scrolling if the user hits the spacebar
